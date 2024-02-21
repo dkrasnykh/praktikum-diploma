@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-http-utils/headers"
 
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/errs"
 )
@@ -53,5 +54,6 @@ func (h *Handler) getAll(c *gin.Context) {
 		newErrorResponse(c, http.StatusNoContent, "response is empty")
 		return
 	}
+	c.Header(headers.ContentType, "application/json")
 	c.JSON(http.StatusOK, resp)
 }

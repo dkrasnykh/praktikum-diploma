@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-http-utils/headers"
 
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/errs"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
@@ -65,5 +66,6 @@ func (h *Handler) getAllWithdrawals(c *gin.Context) {
 		newErrorResponse(c, http.StatusNoContent, "result list is empty")
 		return
 	}
+	c.Header(headers.ContentType, "application/json")
 	c.JSON(http.StatusOK, resp)
 }

@@ -23,8 +23,8 @@ func New() (*Config, error) {
 	flag.StringVar(&c.AccrualSystemAddress, "r", ":8080", "accrual system address")
 	flag.IntVar(&c.RequestInterval, "p", 5, "frequency of data requests from a accrual service")
 	flag.IntVar(&c.RateLimit, "l", 15, "rate limit")
-	flag.IntVar(&c.QueryTimeout, "q", 5, "database query timeout")
-	flag.IntVar(&c.ConnectTimeout, "c", 10, "database connection timeout")
+	flag.IntVar(&c.QueryTimeout, "q", 20, "database query timeout")
+	flag.IntVar(&c.ConnectTimeout, "c", 25, "database connection timeout")
 	flag.Parse()
 
 	err := env.Parse(&c)
