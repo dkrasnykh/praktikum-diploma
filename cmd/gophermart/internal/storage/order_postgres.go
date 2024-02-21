@@ -24,22 +24,22 @@ func NewOrderPostgres(db *pgxpool.Pool, timeoutSec int) *OrderPostgres {
 	}
 }
 
-func (o *OrderPostgres) Add(ctx context.Context, userId int, orderNumber string) error {
+func (o *OrderPostgres) Add(ctx context.Context, userID int, orderNumber string) error {
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 
 	_, err := o.db.Query(newCtx, "INSERT INTO rewards (user_id, order_number, status) values ($1, $2, $3)",
-		userId, orderNumber, models.New)
+		userID, orderNumber, models.New)
 	return err
 }
 
-func (o *OrderPostgres) GetAll(ctx context.Context, userId int) ([]models.Order, error) {
+func (o *OrderPostgres) GetAll(ctx context.Context, userID int) ([]models.Order, error) {
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 
 	rows, err := o.db.Query(newCtx, "SELECT (order_number, status, accrual, updated_at) "+
 		"FROM rewards WHERE user_id=$1 AND withdraw IS NULL ORDER BY updated_at DESC",
-		userId)
+		userID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("postgres get all orders query error: %w", err)
 	}
@@ -69,6 +69,9 @@ func (o *OrderPostgres) GetProcessingOrders(ctx context.Context, rateLimit int) 
 	rows, err := o.db.Query(newCtx,
 		"SELECT order_number FROM rewards WHERE status NOT IN ($1, $2) ORDER BY updated_at LIMIT $3",
 		models.Processed, models.Invalid, rateLimit)
+	if err != nil {
+		return nil, err
+	}
 	orders, err := pgx.CollectRows(rows, pgx.RowTo[string])
 	if err != nil {
 		return nil, fmt.Errorf("postgres processing orders collect rows error: %w", err)
@@ -76,7 +79,7 @@ func (o *OrderPostgres) GetProcessingOrders(ctx context.Context, rateLimit int) 
 	return orders, nil
 }
 
-func (o *OrderPostgres) GetUserIdByNumber(ctx context.Context, orderNumber string) (*int, error) {
+func (o *OrderPostgres) GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error) {
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 

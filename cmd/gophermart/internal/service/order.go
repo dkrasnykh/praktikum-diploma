@@ -17,25 +17,25 @@ func NewOrderService(storage storage.Order) *OrderService {
 	return &OrderService{storage: storage}
 }
 
-func (o *OrderService) Add(ctx context.Context, userId int, orderNumber string) error {
+func (o *OrderService) Add(ctx context.Context, userID int, orderNumber string) error {
 	var id *int
 	var err error
 	if err = validateOrderNumber(orderNumber); err != nil {
 		return err
 	}
-	if id, err = o.storage.GetUserIdByNumber(ctx, orderNumber); err != nil {
+	if id, err = o.storage.GetUserIDByNumber(ctx, orderNumber); err != nil {
 		return err
 	}
-	if id != nil && *id == userId {
+	if id != nil && *id == userID {
 		return errs.ErrOrderExist
 	} else if id != nil {
 		return errs.ErrUnreachableOrder
 	}
-	return o.storage.Add(ctx, userId, orderNumber)
+	return o.storage.Add(ctx, userID, orderNumber)
 }
 
-func (o *OrderService) GetAll(ctx context.Context, userId int) ([]models.Order, error) {
-	return o.storage.GetAll(ctx, userId)
+func (o *OrderService) GetAll(ctx context.Context, userID int) ([]models.Order, error) {
+	return o.storage.GetAll(ctx, userID)
 }
 
 func validateOrderNumber(number string) error {

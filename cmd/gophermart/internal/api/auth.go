@@ -16,7 +16,7 @@ func (h *Handler) signUp(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	id, err := h.service.Authorization.CreateUser(ctx, user)
+	_, err := h.service.Authorization.CreateUser(ctx, user)
 	if err != nil {
 		switch err {
 		case errs.ErrLoginAlreadyExist:
@@ -26,19 +26,20 @@ func (h *Handler) signUp(c *gin.Context) {
 		}
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"id": id,
-	})
+	h.Authorize(c, user)
 }
 
 func (h *Handler) signIn(c *gin.Context) {
-	ctx := c.Request.Context()
 	var user models.User
 	if err := c.BindJSON(&user); err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	token, err := h.service.Authorization.GenerateToken(ctx, user.Login, user.Password)
+	h.Authorize(c, user)
+}
+
+func (h *Handler) Authorize(c *gin.Context, user models.User) {
+	token, err := h.service.Authorization.GenerateToken(c.Request.Context(), user.Login, user.Password)
 	if err != nil {
 		switch err {
 		case errs.ErrInvalidLoginOrPassword:

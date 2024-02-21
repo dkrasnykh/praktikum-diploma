@@ -14,14 +14,14 @@ type Authorization interface {
 }
 
 type Order interface {
-	Add(ctx context.Context, userId int, orderNumber string) error
-	GetAll(ctx context.Context, userId int) ([]models.Order, error)
+	Add(ctx context.Context, userID int, orderNumber string) error
+	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 }
 
 type Withdraw interface {
-	GetUserBalance(ctx context.Context, userId int) (*models.UserBalance, error)
-	WithdrawReward(ctx context.Context, userId int, req models.WithdrawRequest) error
-	GetAllWithdrawals(ctx context.Context, userId int) ([]models.Withdraw, error)
+	GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error)
+	WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error
+	GetAllWithdrawals(ctx context.Context, userID int) ([]models.Withdraw, error)
 }
 
 type Service struct {

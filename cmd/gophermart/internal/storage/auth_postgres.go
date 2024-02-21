@@ -49,7 +49,7 @@ func (r *AuthPostgres) GetUser(ctx context.Context, username, password string) (
 	if err = row.Scan(&id); err != nil && errors.Is(err, pgx.ErrNoRows) {
 		return nil, errs.ErrInvalidLoginOrPassword
 	}
-	return &models.User{Id: id, Login: username, Password: password}, err
+	return &models.User{ID: id, Login: username, Password: password}, err
 }
 
 func isLoginExistError(err error) bool {

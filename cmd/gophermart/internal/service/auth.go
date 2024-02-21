@@ -21,7 +21,7 @@ const (
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	UserId int `json:"user_id"`
+	UserID int `json:"user_id"`
 }
 
 type AuthService struct {
@@ -48,7 +48,7 @@ func (s *AuthService) GenerateToken(ctx context.Context, login, password string)
 			ExpiresAt: time.Now().Add(tokenTTL).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
-		user.Id,
+		user.ID,
 	})
 	return token.SignedString([]byte(tokenKey))
 }
@@ -71,7 +71,7 @@ func (s *AuthService) ParseToken(accessToken string) (int, error) {
 	if claims.StandardClaims.ExpiresAt < time.Now().Unix() {
 		return 0, errors.New("token has expired")
 	}
-	return claims.UserId, nil
+	return claims.UserID, nil
 }
 
 func generatePasswordHash(password string) string {

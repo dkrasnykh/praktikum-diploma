@@ -14,17 +14,17 @@ type Authorization interface {
 }
 
 type Order interface {
-	Add(ctx context.Context, userId int, orderNumber string) error
-	GetAll(ctx context.Context, userId int) ([]models.Order, error)
+	Add(ctx context.Context, userID int, orderNumber string) error
+	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 	Update(ctx context.Context, order models.AccrualResponse) error
 	GetProcessingOrders(ctx context.Context, rateLimit int) ([]string, error)
-	GetUserIdByNumber(ctx context.Context, orderNumber string) (*int, error)
+	GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error)
 }
 
 type Withdraw interface {
-	GetUserBalance(ctx context.Context, userId int) (*models.UserBalance, error)
-	WithdrawReward(ctx context.Context, userId int, req models.WithdrawRequest) error
-	GetAllWithdrawals(ctx context.Context, userId int) ([]models.Withdraw, error)
+	GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error)
+	WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error
+	GetAllWithdrawals(ctx context.Context, userID int) ([]models.Withdraw, error)
 }
 
 type Storage struct {

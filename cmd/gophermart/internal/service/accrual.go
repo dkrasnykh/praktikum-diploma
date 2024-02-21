@@ -32,10 +32,10 @@ func (a *Accrual) Run() {
 	requestTicker := time.NewTicker(time.Duration(a.cfg.RequestInterval) * time.Second)
 	defer requestTicker.Stop()
 
-	for _ = range requestTicker.C {
+	for t := range requestTicker.C {
 		numbers, err := a.storage.GetProcessingOrders(context.Background(), a.cfg.RateLimit)
 		if err != nil {
-			logrus.Error(err)
+			logrus.Error(err, t)
 		}
 		for _, number := range numbers {
 			go a.sendRequest(number)
@@ -46,6 +46,9 @@ func (a *Accrual) Run() {
 func (a *Accrual) sendRequest(number string) {
 	url := fmt.Sprintf("http://%s/api/orders/%s", a.cfg.AccrualSystemAddress, number)
 	resp, err := a.client.R().Get(url)
+	if err != nil {
+		logrus.Error(err)
+	}
 	if resp.StatusCode() != 200 {
 		return
 	}
