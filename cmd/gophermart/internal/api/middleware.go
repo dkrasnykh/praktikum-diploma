@@ -19,24 +19,14 @@ func (h *Handler) userIdentity(c *gin.Context) {
 		newErrorResponse(c, http.StatusUnauthorized, "empty auth header")
 		return
 	}
-
-	headerParts := strings.Split(header, " ")
-	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		newErrorResponse(c, http.StatusUnauthorized, "invalid auth header")
-		return
+	if strings.HasPrefix(header, "Bearer ") {
+		header = strings.TrimPrefix(header, "Bearer ")
 	}
-
-	if len(headerParts[1]) == 0 {
-		newErrorResponse(c, http.StatusUnauthorized, "token is empty")
-		return
-	}
-
-	userID, err := h.service.Authorization.ParseToken(headerParts[1])
+	userID, err := h.service.Authorization.ParseToken(header)
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-
 	c.Set(userCtx, userID)
 }
 
