@@ -26,12 +26,9 @@ func NewAuthPostgres(db *pgxpool.Pool, timeoutSec int) *AuthPostgres {
 }
 
 func (r *AuthPostgres) CreateUser(ctx context.Context, user models.User) (int, error) {
-	newCtx, cancel := context.WithTimeout(ctx, r.queryTimeout)
-	defer cancel()
-
 	var id int
 	var err error
-	row := r.db.QueryRow(newCtx, "INSERT INTO users (login, password_hash) values ($1, $2) RETURNING id",
+	row := r.db.QueryRow(ctx, "INSERT INTO users (login, password_hash) values ($1, $2) RETURNING id",
 		user.Login, user.Password)
 	if err = row.Scan(&id); err != nil && isLoginExistError(err) {
 		return 0, errs.ErrLoginAlreadyExist
@@ -40,12 +37,9 @@ func (r *AuthPostgres) CreateUser(ctx context.Context, user models.User) (int, e
 }
 
 func (r *AuthPostgres) GetUser(ctx context.Context, username, password string) (*models.User, error) {
-	newCtx, cancel := context.WithTimeout(ctx, r.queryTimeout)
-	defer cancel()
-
 	var id int
 	var err error
-	row := r.db.QueryRow(newCtx, "select id from users where login = $1 and password_hash=$2", username, password)
+	row := r.db.QueryRow(ctx, "select id from users where login = $1 and password_hash=$2", username, password)
 	if err = row.Scan(&id); err != nil && errors.Is(err, pgx.ErrNoRows) {
 		return nil, errs.ErrInvalidLoginOrPassword
 	}
