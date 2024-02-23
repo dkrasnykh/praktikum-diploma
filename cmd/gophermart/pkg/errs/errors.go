@@ -9,4 +9,5 @@ var (
 	ErrUnreachableOrder       = errors.New("order has already been added by another user")
 	ErrNoReward               = errors.New("user does not have enough rewards")
 	ErrLoginAlreadyExist      = errors.New("login already exist")
+	ErrStatusIsNotFinal       = errors.New("status is not final")
 )

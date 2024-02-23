@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/config"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/storage"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
@@ -30,10 +31,10 @@ type Service struct {
 	Withdraw
 }
 
-func New(storage *storage.Storage) *Service {
+func New(storage *storage.Storage, cfg *config.Config) *Service {
 	return &Service{
 		Authorization: NewAuthService(storage),
-		Order:         NewOrderService(storage),
+		Order:         NewOrderService(storage, cfg),
 		Withdraw:      NewWithdrawService(storage),
 	}
 }

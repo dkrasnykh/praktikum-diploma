@@ -23,9 +23,9 @@ func (s *Server) Run(cfg *config.Config) error {
 		logrus.Error(err)
 	}
 	r := storage.NewStorage(db, cfg.QueryTimeout)
-	accrual := service.NewAccrual(r, cfg)
-	go accrual.Run()
-	services := service.New(r)
+	//accrual := service.NewAccrual(r, cfg)
+	//go accrual.Run()
+	services := service.New(r, cfg)
 	handlers := api.New(services)
 
 	s.httpServer = &http.Server{
