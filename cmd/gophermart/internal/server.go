@@ -1,12 +1,8 @@
 package internal
 
 import (
-	"context"
 	"net/http"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
 
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/api"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/config"
@@ -16,19 +12,14 @@ import (
 
 type Server struct {
 	httpServer *http.Server
-	db         *pgxpool.Pool
 }
 
 func (s *Server) Run(cfg *config.Config) error {
-	var err error
-	s.db, err = storage.New(cfg)
+	db, err := storage.New(cfg)
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		logrus.Error(err)
-	}
-	r := storage.NewStorage(s.db, cfg.QueryTimeout)
+	r := storage.NewStorage(db, cfg.QueryTimeout)
 	accrual := service.NewAccrual(r, cfg)
 	go accrual.Run()
 	services := service.New(r, cfg)
@@ -42,9 +33,4 @@ func (s *Server) Run(cfg *config.Config) error {
 		WriteTimeout:   10 * time.Second,
 	}
 	return s.httpServer.ListenAndServe()
-}
-
-func (s *Server) Shutdown(ctx context.Context) error {
-	s.db.Close()
-	return s.httpServer.Shutdown(ctx)
 }
