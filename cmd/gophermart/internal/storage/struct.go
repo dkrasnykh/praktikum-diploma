@@ -25,7 +25,7 @@ func ordersList(orderResult []OrderResult) []models.Order {
 	for _, v := range orderResult {
 		o := models.Order{Number: v.Number, Status: v.Status, UploadedAt: v.UploadedAt.Format(time.RFC3339)}
 		if v.Accure.Valid {
-			value := float64(v.Accure.Int64) / 100
+			value := float32(v.Accure.Int64) / 100
 			o.Accrual = &value
 		}
 		orders = append(orders, o)
@@ -36,7 +36,7 @@ func ordersList(orderResult []OrderResult) []models.Order {
 func withdrawList(withdawResult []WithdrawResult) []models.Withdraw {
 	withdrawals := make([]models.Withdraw, 0, len(withdawResult))
 	for _, v := range withdawResult {
-		w := models.Withdraw{Order: v.Number, Sum: float64(v.Withdraw) / 100, ProcessedAt: v.ProcessedAt.Format(time.RFC3339)}
+		w := models.Withdraw{Order: v.Number, Sum: float32(v.Withdraw) / 100, ProcessedAt: v.ProcessedAt.Format(time.RFC3339)}
 		withdrawals = append(withdrawals, w)
 	}
 	return withdrawals

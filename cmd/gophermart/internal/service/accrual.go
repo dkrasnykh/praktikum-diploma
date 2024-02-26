@@ -34,7 +34,7 @@ func (a *Accrual) Run() {
 	defer requestTicker.Stop()
 
 	for t := range requestTicker.C {
-		numbers, err := a.storage.GetProcessingOrders(context.Background(), a.cfg.RateLimit)
+		numbers, err := a.storage.GetProcessingOrders(context.Background())
 		if err != nil {
 			logrus.Error("processing order collection error ", err, t)
 			continue

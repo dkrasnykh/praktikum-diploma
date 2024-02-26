@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
 
 type OrderPostgres struct {
@@ -60,7 +61,7 @@ func (o *OrderPostgres) Update(ctx context.Context, order models.AccrualResponse
 	return err
 }
 
-func (o *OrderPostgres) GetProcessingOrders(ctx context.Context, rateLimit int) ([]string, error) {
+func (o *OrderPostgres) GetProcessingOrders(ctx context.Context) ([]string, error) {
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 

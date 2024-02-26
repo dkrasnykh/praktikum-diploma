@@ -34,7 +34,7 @@ func (s *WithdrawPostrges) GetUserBalance(ctx context.Context, userID int) (*mod
 	if err := row.Scan(&debit, &credit); err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
 	}
-	return &models.UserBalance{Current: float64(debit-credit) / 100, Withdrawn: float64(credit) / 100}, nil
+	return &models.UserBalance{Current: float32(debit-credit) / 100, Withdrawn: float32(credit) / 100}, nil
 }
 
 func (s *WithdrawPostrges) WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error {

@@ -22,7 +22,6 @@ func New() (*Config, error) {
 	flag.StringVar(&c.DatabaseURL, "d", "postgres://postgres:postgres@localhost:5432/gofermart?sslmode=disable", "url for database connection")
 	flag.StringVar(&c.AccrualSystemAddress, "r", ":8080", "accrual system address")
 	flag.IntVar(&c.RequestInterval, "p", 1, "frequency of data requests to accrual service")
-	flag.IntVar(&c.RateLimit, "l", 15, "rate limit")
 	flag.IntVar(&c.QueryTimeout, "q", 5, "database query timeout")
 	flag.IntVar(&c.ConnectTimeout, "c", 10, "database connection timeout")
 	flag.Parse()
