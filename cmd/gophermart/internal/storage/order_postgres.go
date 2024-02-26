@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
 
 type OrderPostgres struct {
@@ -38,8 +37,7 @@ func (o *OrderPostgres) GetAll(ctx context.Context, userID int) ([]models.Order,
 	defer cancel()
 
 	rows, err := o.db.Query(newCtx, "SELECT (order_number, status, accrual, updated_at) "+
-		"FROM rewards WHERE user_id=$1 AND withdraw IS NULL ORDER BY updated_at DESC",
-		userID)
+		"FROM rewards WHERE user_id=$1 AND withdraw IS NULL ORDER BY updated_at", userID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("postgres get all orders query error: %w", err)
 	}
@@ -67,16 +65,16 @@ func (o *OrderPostgres) GetProcessingOrders(ctx context.Context, rateLimit int) 
 	defer cancel()
 
 	rows, err := o.db.Query(newCtx,
-		"SELECT order_number FROM rewards WHERE status NOT IN ($1, $2) ORDER BY updated_at LIMIT $3",
-		models.Processed, models.Invalid, rateLimit)
+		"SELECT order_number FROM rewards WHERE status NOT IN ($1, $2)",
+		models.Processed, models.Invalid)
 	if err != nil {
 		return nil, err
 	}
-	orders, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	listResult, err := pgx.CollectRows(rows, pgx.RowTo[string])
 	if err != nil {
 		return nil, fmt.Errorf("postgres processing orders collect rows error: %w", err)
 	}
-	return orders, nil
+	return listResult, nil
 }
 
 func (o *OrderPostgres) GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error) {

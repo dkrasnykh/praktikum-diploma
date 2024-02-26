@@ -11,10 +11,10 @@ import (
 )
 
 func New(cfg *config.Config) (*pgxpool.Pool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.ConnectTimeout)*time.Second)
+	newCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.ConnectTimeout)*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := pgxpool.New(newCtx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("postgres connection error: %w", err)
 	}

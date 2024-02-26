@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/ShiraazMoollatjie/goluhn"
+
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/storage"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/errs"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
@@ -21,8 +23,8 @@ func (s *WithdrawService) GetUserBalance(ctx context.Context, userID int) (*mode
 }
 
 func (s *WithdrawService) WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error {
-	if err := validateOrderNumber(req.Order); err != nil {
-		return err
+	if err := goluhn.Validate(req.Order); err != nil {
+		return errs.ErrInvalidOrderNumber
 	}
 	balance, err := s.GetUserBalance(ctx, userID)
 	if err != nil {

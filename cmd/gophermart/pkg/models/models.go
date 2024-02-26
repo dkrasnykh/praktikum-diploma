@@ -1,12 +1,11 @@
 package models
 
-type Status string
-
 const (
-	New        Status = "NEW"
-	Processing Status = "PROCESSING"
-	Invalid    Status = "INVALID"
-	Processed  Status = "PROCESSED"
+	New        = "NEW"
+	Processing = "PROCESSING"
+	Invalid    = "INVALID"
+	Processed  = "PROCESSED"
+	Registered = "REGISTERED"
 )
 
 type User struct {

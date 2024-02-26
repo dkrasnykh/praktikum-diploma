@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -35,7 +36,8 @@ func (a *Accrual) Run() {
 	for t := range requestTicker.C {
 		numbers, err := a.storage.GetProcessingOrders(context.Background(), a.cfg.RateLimit)
 		if err != nil {
-			logrus.Error(err, t)
+			logrus.Error("processing order collection error ", err, t)
+			continue
 		}
 		for _, number := range numbers {
 			go a.sendRequest(number)
@@ -44,18 +46,24 @@ func (a *Accrual) Run() {
 }
 
 func (a *Accrual) sendRequest(number string) {
-	url := fmt.Sprintf("http://%s/api/orders/%s", a.cfg.AccrualSystemAddress, number)
+	url := fmt.Sprintf("%s/api/orders/%s", a.cfg.AccrualSystemAddress, number)
 	resp, err := a.client.R().Get(url)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Error("error accrual requesting order status ", err)
+		return
 	}
-	if resp.StatusCode() != 200 {
+	if resp.StatusCode() != http.StatusOK {
+		logrus.Info("received response from accrual with status code ", resp.StatusCode())
 		return
 	}
 	var order models.AccrualResponse
 	err = json.Unmarshal(resp.Body(), &order)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Error("invalid accrual response body ", err)
+		return
+	}
+	if order.Status == models.Registered {
+		order.Status = models.Processing
 	}
 	err = a.storage.Update(context.Background(), order)
 	if err != nil {

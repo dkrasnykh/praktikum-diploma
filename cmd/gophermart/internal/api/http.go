@@ -19,11 +19,14 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	router.POST("/api/user/register", h.signUp)
 	router.POST("/api/user/login", h.signIn)
-	router.POST("/api/user/orders", h.userIdentity, h.Add)
-	router.GET("/api/user/orders", h.userIdentity, h.getAll)
-	router.GET("/api/user/balance", h.userIdentity, h.getBalance)
-	router.POST("/api/user/balance/withdraw", h.userIdentity, h.withdrawReward)
-	router.GET("/api/user/withdrawals", h.userIdentity, h.getAllWithdrawals)
 
+	api := router.Group("/api/user", h.userIdentity)
+	{
+		api.POST("/orders", h.Add)
+		api.GET("/orders", h.getAll)
+		api.GET("/balance", h.getBalance)
+		api.POST("/balance/withdraw", h.withdrawReward)
+		api.GET("/withdrawals", h.getAllWithdrawals)
+	}
 	return router
 }
