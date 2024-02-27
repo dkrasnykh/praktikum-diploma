@@ -18,7 +18,7 @@ func (h *Handler) Add(c *gin.Context) {
 		return
 	}
 	orderNumber, err := io.ReadAll(c.Request.Body)
-	if err != nil {
+	if err != nil || len(orderNumber) == 0 {
 		newErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}

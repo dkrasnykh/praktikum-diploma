@@ -8,6 +8,8 @@ import (
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type Authorization interface {
 	CreateUser(ctx context.Context, user models.User) (int, error)
 	GenerateToken(ctx context.Context, login, password string) (string, error)

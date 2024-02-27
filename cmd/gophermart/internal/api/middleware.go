@@ -20,6 +20,10 @@ func (h *Handler) userIdentity(c *gin.Context) {
 		return
 	}
 	header = strings.TrimPrefix(header, "Bearer ")
+	if strings.TrimSpace(header) == "" {
+		newErrorResponse(c, http.StatusUnauthorized, "token is empty")
+		return
+	}
 	userID, err := h.service.Authorization.ParseToken(header)
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
