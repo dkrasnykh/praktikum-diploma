@@ -19,7 +19,11 @@ func NewWithdrawService(s storage.Withdraw) *WithdrawService {
 }
 
 func (s *WithdrawService) GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error) {
-	return s.storage.GetUserBalance(ctx, userID)
+	current, withdrawn, err := s.storage.GetUserBalance(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &models.UserBalance{Current: float32(current) / 100, Withdrawn: float32(withdrawn) / 100}, nil
 }
 
 func (s *WithdrawService) WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error {
@@ -30,7 +34,7 @@ func (s *WithdrawService) WithdrawReward(ctx context.Context, userID int, req mo
 	if err != nil {
 		return err
 	}
-	if int64(balance.Current*100) < int64(req.Sum*100) {
+	if balance.Current < req.Sum {
 		return errs.ErrNoReward
 	}
 	return s.storage.WithdrawReward(ctx, userID, req)

@@ -24,17 +24,17 @@ func NewWithdrawPostgres(db *pgxpool.Pool, timeoutSec int) *WithdrawPostrges {
 	}
 }
 
-func (s *WithdrawPostrges) GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error) {
+func (s *WithdrawPostrges) GetUserBalance(ctx context.Context, userID int) (current, withdrawn int64, err error) {
 	newCtx, cancel := context.WithTimeout(ctx, s.queryTimeout)
 	defer cancel()
 
 	var debit, credit int64
 	row := s.db.QueryRow(newCtx, "SELECT SUM(accrual) as total, SUM(withdraw) as withdraw "+
 		"FROM (SELECT COALESCE(accrual, 0) as accrual, COALESCE(withdraw, 0) as withdraw FROM rewards WHERE user_id=$1) as t1", userID)
-	if err := row.Scan(&debit, &credit); err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return nil, err
+	if err = row.Scan(&debit, &credit); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return 0, 0, err
 	}
-	return &models.UserBalance{Current: float32(debit-credit) / 100, Withdrawn: float32(credit) / 100}, nil
+	return debit - credit, credit, nil
 }
 
 func (s *WithdrawPostrges) WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error {

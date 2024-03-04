@@ -27,21 +27,10 @@ func NewOrderService(storage storage.Order, cfg *config.Config) *OrderService {
 }
 
 func (o *OrderService) Add(ctx context.Context, userID int, orderNumber string) error {
-	var id *int
-	var err error
-	if err = goluhn.Validate(orderNumber); err != nil {
+	if err := goluhn.Validate(orderNumber); err != nil {
 		return errs.ErrInvalidOrderNumber
 	}
-	if id, err = o.storage.GetUserIDByNumber(ctx, orderNumber); err != nil {
-		return err
-	}
-	if id != nil && *id == userID {
-		return errs.ErrOrderExist
-	} else if id != nil {
-		return errs.ErrUnreachableOrder
-	}
-	err = o.storage.Add(ctx, userID, orderNumber)
-	return err
+	return o.storage.Add(ctx, userID, orderNumber)
 }
 
 func (o *OrderService) GetAll(ctx context.Context, userID int) ([]models.Order, error) {

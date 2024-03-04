@@ -20,11 +20,10 @@ type Order interface {
 	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 	Update(ctx context.Context, order models.AccrualResponse) error
 	GetProcessingOrders(ctx context.Context, limit int) ([]string, error)
-	GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error)
 }
 
 type Withdraw interface {
-	GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error)
+	GetUserBalance(ctx context.Context, userID int) (current, withdrawn int64, err error)
 	WithdrawReward(ctx context.Context, userID int, req models.WithdrawRequest) error
 	GetAllWithdrawals(ctx context.Context, userID int) ([]models.Withdraw, error)
 }
