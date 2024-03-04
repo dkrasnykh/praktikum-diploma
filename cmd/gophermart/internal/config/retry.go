@@ -28,8 +28,5 @@ func (c *Retry) OnRetry(n uint, err error) {
 }
 
 func (c *Retry) IfStatusTooManyRequests(err error) bool {
-	if errors.Is(err, errs.ErrTooManyRequests) {
-		return true
-	}
-	return false
+	return errors.Is(err, errs.ErrTooManyRequests)
 }
