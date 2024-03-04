@@ -82,7 +82,7 @@ func TestUserIdentity(t *testing.T) {
 
 			r := gin.New()
 			r.GET("/identity", handler.userIdentity, func(c *gin.Context) {
-				id, _ := c.Get(userCtx)
+				id, _ := c.Get(_userKey)
 				c.String(200, "%d", id)
 			})
 
@@ -101,7 +101,7 @@ func TestUserIdentity(t *testing.T) {
 func TestGetUserId(t *testing.T) {
 	var getContext = func(id int) *gin.Context {
 		ctx := &gin.Context{}
-		ctx.Set(userCtx, id)
+		ctx.Set(_userKey, id)
 		return ctx
 	}
 	testTable := []struct {

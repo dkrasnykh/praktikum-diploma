@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -21,7 +22,7 @@ func (s *Server) Run(cfg *config.Config) error {
 	}
 	r := storage.NewStorage(db, cfg.QueryTimeout)
 	accrual := service.NewAccrual(r, cfg)
-	go accrual.Run()
+	go accrual.Run(context.Background())
 	services := service.New(r, cfg)
 	handlers := api.New(services)
 

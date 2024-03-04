@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,10 +39,10 @@ func (h *Handler) withdrawReward(c *gin.Context) {
 		return
 	}
 	if err = h.service.Withdraw.WithdrawReward(ctx, userID, request); err != nil {
-		switch err {
-		case errs.ErrInvalidOrderNumber:
+		switch {
+		case errors.Is(err, errs.ErrInvalidOrderNumber):
 			newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
-		case errs.ErrNoReward:
+		case errors.Is(err, errs.ErrNoReward):
 			newErrorResponse(c, http.StatusPaymentRequired, err.Error())
 		default:
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())

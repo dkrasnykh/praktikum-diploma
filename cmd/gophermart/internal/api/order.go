@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -23,12 +24,12 @@ func (h *Handler) Add(c *gin.Context) {
 		return
 	}
 	if err = h.service.Order.Add(ctx, userID, string(orderNumber)); err != nil {
-		switch err {
-		case errs.ErrOrderExist:
+		switch {
+		case errors.Is(err, errs.ErrOrderExist):
 			newErrorResponse(c, http.StatusOK, err.Error())
-		case errs.ErrUnreachableOrder:
+		case errors.Is(err, errs.ErrUnreachableOrder):
 			newErrorResponse(c, http.StatusConflict, err.Error())
-		case errs.ErrInvalidOrderNumber:
+		case errors.Is(err, errs.ErrInvalidOrderNumber):
 			newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		default:
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())

@@ -19,7 +19,7 @@ type Order interface {
 	Add(ctx context.Context, userID int, orderNumber string) error
 	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 	Update(ctx context.Context, order models.AccrualResponse) error
-	GetProcessingOrders(ctx context.Context) ([]string, error)
+	GetProcessingOrders(ctx context.Context, limit int) ([]string, error)
 	GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error)
 }
 

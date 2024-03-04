@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	authorizationHeader = "Authorization"
-	userCtx             = "userID"
+	_authorizationHeader = "Authorization"
+	_userKey             = "userID"
 )
 
 func (h *Handler) userIdentity(c *gin.Context) {
-	header := c.GetHeader(authorizationHeader)
+	header := c.GetHeader(_authorizationHeader)
 	if header == "" {
 		newErrorResponse(c, http.StatusUnauthorized, "empty auth header")
 		return
@@ -29,11 +29,11 @@ func (h *Handler) userIdentity(c *gin.Context) {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	c.Set(userCtx, userID)
+	c.Set(_userKey, userID)
 }
 
 func getUserID(c *gin.Context) (int, error) {
-	id, ok := c.Get(userCtx)
+	id, ok := c.Get(_userKey)
 	if !ok {
 		return 0, errors.New("user id not found")
 	}

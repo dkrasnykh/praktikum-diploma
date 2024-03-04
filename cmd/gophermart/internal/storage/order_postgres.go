@@ -61,13 +61,13 @@ func (o *OrderPostgres) Update(ctx context.Context, order models.AccrualResponse
 	return err
 }
 
-func (o *OrderPostgres) GetProcessingOrders(ctx context.Context) ([]string, error) {
+func (o *OrderPostgres) GetProcessingOrders(ctx context.Context, limit int) ([]string, error) {
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 
 	rows, err := o.db.Query(newCtx,
-		"SELECT order_number FROM rewards WHERE status NOT IN ($1, $2)",
-		models.Processed, models.Invalid)
+		"SELECT order_number FROM rewards WHERE status NOT IN ($1, $2) ORDER BY updated_at LIMIT $3",
+		models.Processed, models.Invalid, limit)
 	if err != nil {
 		return nil, err
 	}

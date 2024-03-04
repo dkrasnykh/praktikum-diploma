@@ -60,7 +60,7 @@ func TestGetBalance(t *testing.T) {
 
 			r := gin.New()
 			r.GET("/api/user/balance", func(c *gin.Context) {
-				c.Set(userCtx, 1)
+				c.Set(_userKey, 1)
 			}, handler.getBalance)
 
 			w := httptest.NewRecorder()
@@ -142,7 +142,7 @@ func TestWithdrawReward(t *testing.T) {
 
 			r := gin.New()
 			r.POST("/api/user/balance/withdraw", func(c *gin.Context) {
-				c.Set(userCtx, 1)
+				c.Set(_userKey, 1)
 			}, handler.withdrawReward)
 
 			w := httptest.NewRecorder()
@@ -205,7 +205,7 @@ func TestGetAllWithdrawals(t *testing.T) {
 
 			r := gin.New()
 			r.GET("/api/user/withdrawals", func(c *gin.Context) {
-				c.Set(userCtx, 1)
+				c.Set(_userKey, 1)
 			}, handler.getAllWithdrawals)
 
 			w := httptest.NewRecorder()

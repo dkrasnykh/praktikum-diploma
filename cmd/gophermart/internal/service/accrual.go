@@ -5,68 +5,98 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/config"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/storage"
+	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/errs"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
 
 type Accrual struct {
-	storage storage.Order
-	cfg     *config.Config
-	client  *resty.Client
+	storage  storage.Order
+	cfg      *config.Config
+	client   *resty.Client
+	retryCfg *config.Retry
 }
 
 func NewAccrual(s storage.Order, c *config.Config) *Accrual {
 	return &Accrual{
-		storage: s,
-		cfg:     c,
-		client:  resty.New(),
+		storage:  s,
+		cfg:      c,
+		client:   resty.New(),
+		retryCfg: config.RetryNew(),
 	}
 }
 
-func (a *Accrual) Run() {
+func (a *Accrual) Run(ctx context.Context) {
 	requestTicker := time.NewTicker(time.Duration(a.cfg.RequestInterval) * time.Second)
 	defer requestTicker.Stop()
 
 	for t := range requestTicker.C {
-		numbers, err := a.storage.GetProcessingOrders(context.Background())
+		numbers, err := a.storage.GetProcessingOrders(ctx, a.cfg.RateLimit)
 		if err != nil {
 			logrus.Error("processing order collection error ", err, t)
 			continue
 		}
 		for _, number := range numbers {
-			go a.sendRequest(number)
+			order, err := a.getOrderStatus(number)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+			err = a.updateOrderStatus(ctx, *order)
+			logrus.Error(err)
 		}
 	}
 }
 
-func (a *Accrual) sendRequest(number string) {
+func (a *Accrual) getOrderStatus(number string) (*models.AccrualResponse, error) {
 	url := fmt.Sprintf("%s/api/orders/%s", a.cfg.AccrualSystemAddress, number)
-	resp, err := a.client.R().Get(url)
+	var resp *resty.Response
+	err := retry.Do(
+		func() error {
+			var err error
+			resp, err = a.client.R().Get(url)
+			if err != nil {
+				return fmt.Errorf("error accrual requesting order status : %w", err)
+			}
+			if resp.StatusCode() == http.StatusTooManyRequests {
+				retryAfterHeader := resp.Header().Get("Retry-After")
+				if retryAfterHeader != "" {
+					a.retryCfg.RetryAfterMillisec, err = strconv.Atoi(retryAfterHeader)
+					logrus.Error(err)
+				}
+				return errs.ErrTooManyRequests
+			}
+			return nil
+		},
+		retry.RetryIf(a.retryCfg.IfStatusTooManyRequests),
+		retry.Attempts(a.retryCfg.Attempts),
+		retry.DelayType(a.retryCfg.DelayType),
+	)
 	if err != nil {
-		logrus.Error("error accrual requesting order status ", err)
-		return
+		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		logrus.Info("received response from accrual with status code ", resp.StatusCode())
-		return
+		return nil, fmt.Errorf("received response from accrual with status code : %d", resp.StatusCode())
 	}
 	var order models.AccrualResponse
 	err = json.Unmarshal(resp.Body(), &order)
 	if err != nil {
-		logrus.Error("invalid accrual response body ", err)
-		return
+		return nil, fmt.Errorf("invalid accrual response body : %w", err)
 	}
-	if order.Status == models.Registered {
-		order.Status = models.Processing
+	return &order, nil
+}
+
+func (a *Accrual) updateOrderStatus(ctx context.Context, o models.AccrualResponse) error {
+	if o.Status == models.Registered {
+		o.Status = models.Processing
 	}
-	err = a.storage.Update(context.Background(), order)
-	if err != nil {
-		logrus.Error(err)
-	}
+	return a.storage.Update(ctx, o)
 }

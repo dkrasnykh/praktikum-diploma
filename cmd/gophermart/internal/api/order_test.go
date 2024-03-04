@@ -90,7 +90,7 @@ func TestAdd(t *testing.T) {
 
 			r := gin.New()
 			r.POST("/api/user/orders", func(c *gin.Context) {
-				c.Set(userCtx, 1)
+				c.Set(_userKey, 1)
 			}, handler.Add)
 
 			w := httptest.NewRecorder()
@@ -155,7 +155,7 @@ func TestGetAll(t *testing.T) {
 
 			r := gin.New()
 			r.GET("/api/user/orders", func(c *gin.Context) {
-				c.Set(userCtx, 1)
+				c.Set(_userKey, 1)
 			}, handler.getAll)
 
 			w := httptest.NewRecorder()

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,8 @@ func (h *Handler) signUp(c *gin.Context) {
 	}
 	_, err := h.service.Authorization.CreateUser(ctx, user)
 	if err != nil {
-		switch err {
-		case errs.ErrLoginAlreadyExist:
+		switch {
+		case errors.Is(err, errs.ErrLoginAlreadyExist):
 			newErrorResponse(c, http.StatusConflict, err.Error())
 		default:
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -41,15 +42,15 @@ func (h *Handler) signIn(c *gin.Context) {
 func (h *Handler) Authorize(c *gin.Context, user models.User) {
 	token, err := h.service.Authorization.GenerateToken(c.Request.Context(), user.Login, user.Password)
 	if err != nil {
-		switch err {
-		case errs.ErrInvalidLoginOrPassword:
+		switch {
+		case errors.Is(err, errs.ErrInvalidLoginOrPassword):
 			newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		default:
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
-	c.Header(authorizationHeader, token)
+	c.Header(_authorizationHeader, token)
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"token": token,
 	})
