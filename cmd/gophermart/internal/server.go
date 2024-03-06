@@ -8,6 +8,7 @@ import (
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/api"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/config"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/service"
+	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/service/accrual"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/internal/storage"
 )
 
@@ -21,7 +22,7 @@ func (s *Server) Run(cfg *config.Config) error {
 		return err
 	}
 	r := storage.NewStorage(db, cfg.QueryTimeout)
-	accrual := service.NewAccrual(r, cfg)
+	accrual := accrual.New(r, cfg)
 	go accrual.Run(context.Background())
 	services := service.New(r, cfg)
 	handlers := api.New(services)
