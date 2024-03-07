@@ -23,14 +23,14 @@ func (m *WorkerTimeoutChan) Insert(key int, value chan int) {
 
 func (m *WorkerTimeoutChan) Get(key int) chan int {
 	m.mx.RLock()
-	m.mx.RUnlock()
+	defer m.mx.RUnlock()
 
 	return m.value[key]
 }
 
 func (m *WorkerTimeoutChan) Broadcast(timeout int) {
 	m.mx.RLock()
-	m.mx.RUnlock()
+	defer m.mx.RUnlock()
 
 	for _, ch := range m.value {
 		ch <- timeout
