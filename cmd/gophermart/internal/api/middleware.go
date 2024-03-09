@@ -24,7 +24,7 @@ func (h *Handler) userIdentity(c *gin.Context) {
 		newErrorResponse(c, http.StatusUnauthorized, "token is empty")
 		return
 	}
-	userID, err := h.service.Authorization.ParseToken(header)
+	userID, err := h.service.ParseToken(header)
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return

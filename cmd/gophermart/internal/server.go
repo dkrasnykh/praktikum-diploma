@@ -22,8 +22,8 @@ func (s *Server) Run(cfg *config.Config) error {
 		return err
 	}
 	r := storage.NewStorage(db, cfg.QueryTimeout)
-	accrual := accrual.New(r, cfg)
-	go accrual.Run(context.Background())
+	accrualService := accrual.New(r, cfg)
+	go accrualService.Run(context.Background())
 	services := service.New(r, cfg)
 	handlers := api.New(services)
 

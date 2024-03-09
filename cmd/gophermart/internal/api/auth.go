@@ -17,7 +17,7 @@ func (h *Handler) signUp(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	_, err := h.service.Authorization.CreateUser(ctx, user)
+	_, err := h.service.CreateUser(ctx, user)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrLoginAlreadyExist):
@@ -40,7 +40,7 @@ func (h *Handler) signIn(c *gin.Context) {
 }
 
 func (h *Handler) Authorize(c *gin.Context, user models.User) {
-	token, err := h.service.Authorization.GenerateToken(c.Request.Context(), user.Login, user.Password)
+	token, err := h.service.GenerateToken(c.Request.Context(), user.Login, user.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidLoginOrPassword):

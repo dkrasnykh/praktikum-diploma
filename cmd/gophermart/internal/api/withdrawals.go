@@ -19,7 +19,7 @@ func (h *Handler) getBalance(c *gin.Context) {
 		return
 	}
 	var resp *models.UserBalance
-	if resp, err = h.service.Withdraw.GetUserBalance(ctx, userID); err != nil {
+	if resp, err = h.service.GetUserBalance(ctx, userID); err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -38,7 +38,7 @@ func (h *Handler) withdrawReward(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	if err = h.service.Withdraw.WithdrawReward(ctx, userID, request); err != nil {
+	if err = h.service.WithdrawReward(ctx, userID, request); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrInvalidOrderNumber):
 			newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
@@ -58,7 +58,7 @@ func (h *Handler) getAllWithdrawals(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	resp, err := h.service.Withdraw.GetAllWithdrawals(ctx, userID)
+	resp, err := h.service.GetAllWithdrawals(ctx, userID)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

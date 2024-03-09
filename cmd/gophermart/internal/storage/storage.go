@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
@@ -10,16 +11,24 @@ import (
 
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
 
+type Transaction interface {
+	InitTx(ctx context.Context) (context.Context, error)
+	CompleteTx(ctx context.Context)
+	GetCtxTxOrDefault(ctx context.Context) (pgx.Tx, error)
+}
+
 type Authorization interface {
 	CreateUser(ctx context.Context, user models.User) (int, error)
 	GetUser(ctx context.Context, username, password string) (*models.User, error)
 }
 
 type Order interface {
+	Transaction
 	Add(ctx context.Context, userID int, orderNumber string) error
 	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 	Update(ctx context.Context, order models.AccrualResponse) error
 	GetProcessingOrders(ctx context.Context) ([]string, error)
+	GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error)
 }
 
 type Withdraw interface {

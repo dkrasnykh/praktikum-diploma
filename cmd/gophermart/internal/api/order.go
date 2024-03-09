@@ -23,7 +23,7 @@ func (h *Handler) Add(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, "invalid input body")
 		return
 	}
-	if err = h.service.Order.Add(ctx, userID, string(orderNumber)); err != nil {
+	if err = h.service.Add(ctx, userID, string(orderNumber)); err != nil {
 		switch {
 		case errors.Is(err, errs.ErrOrderExist):
 			newErrorResponse(c, http.StatusOK, err.Error())
@@ -46,7 +46,7 @@ func (h *Handler) getAll(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	resp, err := h.service.Order.GetAll(ctx, userID)
+	resp, err := h.service.GetAll(ctx, userID)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

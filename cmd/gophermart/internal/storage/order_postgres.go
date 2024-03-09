@@ -2,27 +2,28 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
 
-	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/errs"
 	"github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 )
 
 type OrderPostgres struct {
 	db           *pgxpool.Pool
 	queryTimeout time.Duration
+	*TxManager
 }
 
 func NewOrderPostgres(db *pgxpool.Pool, timeoutSec int) *OrderPostgres {
 	return &OrderPostgres{
 		db:           db,
 		queryTimeout: time.Duration(timeoutSec) * time.Second,
+		TxManager:    NewManager(db),
 	}
 }
 
@@ -30,39 +31,15 @@ func (o *OrderPostgres) Add(ctx context.Context, userID int, orderNumber string)
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 
-	tx, err := o.db.Begin(newCtx)
+	tx, err := o.TxManager.GetCtxTxOrDefault(ctx)
 	if err != nil {
 		return err
-	}
-	var id sql.NullInt32
-	row := tx.QueryRow(newCtx, "SELECT user_id FROM rewards WHERE order_number=$1 LIMIT 1", orderNumber)
-	if err = row.Scan(&id); err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		exErr := fmt.Errorf("select user_id by number exec %w", err)
-		err = tx.Rollback(newCtx)
-		if err != nil {
-			return errors.Join(exErr, err)
-		}
-		return exErr
-	}
-
-	if id.Valid && int(id.Int32) == userID {
-		return errs.ErrOrderExist
-	} else if id.Valid {
-		return errs.ErrUnreachableOrder
 	}
 
 	rows, err := tx.Query(newCtx, "INSERT INTO rewards (user_id, order_number, status) values ($1, $2, $3)",
 		userID, orderNumber, models.New)
-	if err != nil {
-		exErr := fmt.Errorf("insert new order into db exec %w", err)
-		err = tx.Rollback(newCtx)
-		if err != nil {
-			return errors.Join(exErr, err)
-		}
-		return exErr
-	}
 	rows.Close()
-	return tx.Commit(newCtx)
+	return err
 }
 
 func (o *OrderPostgres) GetAll(ctx context.Context, userID int) ([]models.Order, error) {
@@ -108,4 +85,24 @@ func (o *OrderPostgres) GetProcessingOrders(ctx context.Context) ([]string, erro
 		return nil, fmt.Errorf("postgres processing orders collect rows error: %w", err)
 	}
 	return listResult, nil
+}
+
+func (o *OrderPostgres) GetUserIDByNumber(ctx context.Context, orderNumber string) (*int, error) {
+	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
+	defer cancel()
+	var err error
+
+	tx, err := o.TxManager.GetCtxTxOrDefault(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var id int
+	row := tx.QueryRow(newCtx, "SELECT user_id FROM rewards WHERE order_number=$1 LIMIT 1", orderNumber)
+
+	if err = row.Scan(&id); err != nil && errors.Is(err, pgx.ErrNoRows) {
+		logrus.Error(err)
+		return nil, nil
+	}
+	return &id, err
 }
