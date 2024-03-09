@@ -8,6 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Key string
+
+const keyTx Key = "tx"
+
 type TxManager struct {
 	db *pgxpool.Pool
 }
@@ -23,11 +27,11 @@ func (m *TxManager) InitTx(ctx context.Context) (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
-	return context.WithValue(ctx, "tx", tx), nil
+	return context.WithValue(ctx, keyTx, tx), nil
 }
 
 func (m *TxManager) CompleteTx(ctx context.Context) {
-	value := ctx.Value("tx")
+	value := ctx.Value(keyTx)
 	tx, ok := value.(pgx.Tx)
 	if !ok {
 		logrus.Error("context value with key 'tx' not found")
@@ -43,7 +47,7 @@ func (m *TxManager) CompleteTx(ctx context.Context) {
 }
 
 func (m *TxManager) GetCtxTxOrDefault(ctx context.Context) (pgx.Tx, error) {
-	value := ctx.Value("tx")
+	value := ctx.Value(keyTx)
 	tx, ok := value.(pgx.Tx)
 	var err error
 	if !ok {
