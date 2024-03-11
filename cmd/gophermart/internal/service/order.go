@@ -16,13 +16,15 @@ type OrderService struct {
 	storage storage.Order
 	client  *resty.Client
 	cfg     *config.Config
+	tm      Transaction
 }
 
-func NewOrderService(storage storage.Order, cfg *config.Config) *OrderService {
+func NewOrderService(storage storage.Order, tm Transaction, cfg *config.Config) *OrderService {
 	return &OrderService{
 		storage: storage,
 		client:  resty.New(),
 		cfg:     cfg,
+		tm:      tm,
 	}
 }
 
@@ -33,11 +35,11 @@ func (o *OrderService) Add(ctx context.Context, userID int, orderNumber string) 
 		return errs.ErrInvalidOrderNumber
 	}
 
-	newCtx, err := o.storage.InitTx(ctx)
+	newCtx, err := o.tm.InitTx(ctx)
 	if err != nil {
 		return err
 	}
-	defer o.storage.CompleteTx(newCtx)
+	defer o.tm.CompleteTx(newCtx)
 
 	if id, err = o.storage.GetUserIDByNumber(newCtx, orderNumber); err != nil {
 		return err

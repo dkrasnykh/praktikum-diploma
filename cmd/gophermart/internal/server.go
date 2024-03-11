@@ -21,10 +21,11 @@ func (s *Server) Run(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	r := storage.NewStorage(db, cfg.QueryTimeout)
+	tm := storage.NewManager(db)
+	r := storage.NewStorage(db, tm, cfg.QueryTimeout)
 	accrualService := accrual.New(r, cfg)
 	go accrualService.Run(context.Background())
-	services := service.New(r, cfg)
+	services := service.New(r, tm, cfg)
 	handlers := api.New(services)
 
 	s.httpServer = &http.Server{

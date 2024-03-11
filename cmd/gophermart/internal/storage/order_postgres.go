@@ -16,14 +16,14 @@ import (
 type OrderPostgres struct {
 	db           *pgxpool.Pool
 	queryTimeout time.Duration
-	*TxManager
+	tm           Transaction
 }
 
-func NewOrderPostgres(db *pgxpool.Pool, timeoutSec int) *OrderPostgres {
+func NewOrderPostgres(db *pgxpool.Pool, tm Transaction, timeoutSec int) *OrderPostgres {
 	return &OrderPostgres{
 		db:           db,
 		queryTimeout: time.Duration(timeoutSec) * time.Second,
-		TxManager:    NewManager(db),
+		tm:           tm,
 	}
 }
 
@@ -31,7 +31,7 @@ func (o *OrderPostgres) Add(ctx context.Context, userID int, orderNumber string)
 	newCtx, cancel := context.WithTimeout(ctx, o.queryTimeout)
 	defer cancel()
 
-	tx, err := o.TxManager.GetCtxTxOrDefault(ctx)
+	tx, err := o.tm.GetCtxTxOrDefault(ctx)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (o *OrderPostgres) GetUserIDByNumber(ctx context.Context, orderNumber strin
 	defer cancel()
 	var err error
 
-	tx, err := o.TxManager.GetCtxTxOrDefault(ctx)
+	tx, err := o.tm.GetCtxTxOrDefault(ctx)
 	if err != nil {
 		return nil, err
 	}

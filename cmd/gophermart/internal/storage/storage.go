@@ -12,8 +12,6 @@ import (
 //go:generate mockgen -source=storage.go -destination=mocks/mock.go
 
 type Transaction interface {
-	InitTx(ctx context.Context) (context.Context, error)
-	CompleteTx(ctx context.Context)
 	GetCtxTxOrDefault(ctx context.Context) (pgx.Tx, error)
 }
 
@@ -23,7 +21,6 @@ type Authorization interface {
 }
 
 type Order interface {
-	Transaction
 	Add(ctx context.Context, userID int, orderNumber string) error
 	GetAll(ctx context.Context, userID int) ([]models.Order, error)
 	Update(ctx context.Context, order models.AccrualResponse) error
@@ -43,10 +40,10 @@ type Storage struct {
 	Withdraw
 }
 
-func NewStorage(db *pgxpool.Pool, timeoutSec int) *Storage {
+func NewStorage(db *pgxpool.Pool, tm Transaction, timeoutSec int) *Storage {
 	return &Storage{
 		Authorization: NewAuthPostgres(db, timeoutSec),
-		Order:         NewOrderPostgres(db, timeoutSec),
-		Withdraw:      NewWithdrawPostgres(db, timeoutSec),
+		Order:         NewOrderPostgres(db, tm, timeoutSec),
+		Withdraw:      NewWithdrawPostgres(db, tm, timeoutSec),
 	}
 }

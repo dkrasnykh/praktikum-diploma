@@ -1,0 +1,82 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+actor user
+box "Gophermart" #LightCyan
+participant middleware
+participant "withdrawals\nhandler"
+participant "withdrawals\nservice"
+database storage
+end box
+
+ == Запрос на списание средств: успешная обработка запроса ==
+autonumber 1.1
+user -> middleware: POST /api/user/balance/withdraw
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" -> "withdrawals\nservice": {order string, sum float32}
+"withdrawals\nservice" -> storage: getUserBalance(userId)
+activate "withdrawals\nservice"
+storage --> "withdrawals\nservice": current, withdrawn (int64), error
+"withdrawals\nservice" -> "withdrawals\nservice": проверка остатка баллов пользователя
+"withdrawals\nservice" -> storage: WithdrawReward(userId, WithdrawRequest)
+storage --> "withdrawals\nservice": nil error
+deactivate "withdrawals\nservice"
+"withdrawals\nservice" --> "withdrawals\nhandler": nil error
+"withdrawals\nhandler" --> user: 200 OK
+
+ == Запрос на списание средств: на счету недостаточно средств ==
+autonumber 2.1
+user -> middleware: POST /api/user/balance/withdraw
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" -> "withdrawals\nservice": {order string, sum float32}
+"withdrawals\nservice" -> storage: getUserBalance(userId)
+storage --> "withdrawals\nservice": current, withdrawn (int64), error
+"withdrawals\nservice" -> "withdrawals\nservice": проверка остатка баллов пользователя
+"withdrawals\nservice" -->  "withdrawals\nhandler": error ErrNoReward\n у пользователя недостаточно баллов
+"withdrawals\nhandler" --> user: 402 payment required
+
+ == Запрос на списание средств: пользователь не авторизован ==
+autonumber 3.1
+user -> middleware: POST /api/user/balance/withdraw
+middleware -> middleware: валидация токена
+middleware --> user: 401 unauthorized
+
+ == Запрос на списание средств: неверный номер заказа ==
+autonumber 4.1
+user -> middleware: POST /api/user/balance/withdraw
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" -> "withdrawals\nservice": {order string, sum float32}
+"withdrawals\nservice" -> "withdrawals\nservice": валидация номера заказа\nалгоритм Луна
+"withdrawals\nservice" --> "withdrawals\nhandler": ошибка ErrInvalidOrderNumber
+"withdrawals\nhandler" --> user: unprocessable entity
+
+ == Получение текущего баланса пользователя ==
+autonumber 5.1
+user -> middleware: GET /api/user/balance
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" -> "withdrawals\nservice": context, userId
+"withdrawals\nservice" -> storage: context, userId
+storage --> "withdrawals\nservice": current int64, withdrawn int64, error
+"withdrawals\nservice" --> "withdrawals\nhandler": {Current float32, Withdrawn float32}
+"withdrawals\nhandler" --> user: 200 OK {Current float32, Withdrawn float32}
+
+ == Получение информации о выводе средств: успешная обработка запроса ==
+autonumber 6.1
+user -> middleware: GET /api/user/withdrawals
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" ->  "withdrawals\nservice": context, userId
+"withdrawals\nservice" -> storage: GetAllWithdrawals(ctx, userID)
+storage --> "withdrawals\nservice": []Withdraw{Order, Sum, ProcessedAt}
+"withdrawals\nservice" --> "withdrawals\nhandler":  []Withdraw{Order, Sum, ProcessedAt}
+"withdrawals\nhandler" --> user: 200 OK []Withdraw{Order, Sum, ProcessedAt}
+
+
+ == Получение информации о выводе средств: нет ни одного списания ==
+autonumber 7.1
+user -> middleware: GET /api/user/withdrawals
+middleware -> "withdrawals\nhandler": context: userId
+"withdrawals\nhandler" ->  "withdrawals\nservice": context, userId
+"withdrawals\nservice" -> storage: GetAllWithdrawals(ctx, userID)
+storage --> "withdrawals\nservice": empty Withdraw list
+"withdrawals\nservice" --> "withdrawals\nhandler":  empty Withdraw list
+"withdrawals\nhandler" --> user: 204 no content
+@enduml

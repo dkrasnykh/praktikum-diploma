@@ -1,0 +1,88 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+actor user
+box "Gophermart" #LightCyan
+participant middleware
+participant "order\nhandler"
+participant "order\nservice"
+database storage
+end box
+
+ == Загрузка номера заказа: новый номер заказа принят в обработку ==
+autonumber 1.1
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" -> "order\nservice": ctx, userId, number
+"order\nservice" -> "order\nservice": валидация номера заказа\n(алгоритм Луна)
+"order\nservice" -> storage: getUserIdByNumber(orderNumber)
+activate "order\nservice"
+storage --> "order\nservice": *id is nil, nil error\n(новый заказ)
+"order\nservice" -> storage: добавлен заказ со статусом NEW
+storage --> "order\nservice": nil error
+deactivate "order\nservice"
+ "order\nservice" --> "order\nhandler":  nil error
+ "order\nhandler" --> user: 202 Accepted
+
+ == Загрузка номера заказа: пользователь не аутентифицирован ==
+autonumber 2.1
+user -> middleware: POST /api/user/orders
+middleware -> middleware: валидация токена
+middleware --> user: 401 unauthorized
+
+== Загрузка номера заказа: неверный формат запроса ==
+autonumber 3.1
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" --> user: 400 bad request
+
+== Загрузка номера заказа: неверный формат номера заказа ==
+autonumber 4.1
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" -> "order\nservice": ctx, userId, number
+"order\nservice" -> "order\nservice": валидация номера заказа\n(алгоритм Луна)
+"order\nservice" --> "order\nhandler": error errs.ErrInvalidOrderNumber
+"order\nhandler" --> user: 422 Unprocessable entity
+
+== Загрузка номера заказа: номер заказа уже был загружен другим пользователем ==
+autonumber 5.1
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" -> "order\nservice": ctx, userId, number
+"order\nservice" -> "order\nservice": валидация номера заказа\n(алгоритм Луна)
+"order\nservice" -> storage: getUserIdByNumber(orderNumber)
+storage --> "order\nservice": идентификатор другого пользователя
+"order\nservice" --> "order\nhandler": error ErrUnreachableOrder\n(заказ был загружен другим пользователем)
+"order\nhandler" --> user: 409 conflict
+
+== Загрузка номера заказа: номер заказа уже был загружен этим пользователем ==
+autonumber 6.1
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" -> "order\nservice": ctx, userId, number
+"order\nservice" -> "order\nservice": валидация номера заказа\n(алгоритм Луна)
+"order\nservice" -> storage: getUserIdByNumber(orderNumber)
+storage --> "order\nservice": идентификатор текущего пользователя
+"order\nservice" --> "order\nhandler": error ErrOrderExist\n(заказ был загружен ранее)
+"order\nhandler" --> user: 200 OK
+
+== Получение списка загруженных номеров заказов ==
+autonumber 7.1
+user -> middleware: GET /api/user/orders
+middleware -> "order\nhandler": context: userId
+"order\nhandler" -> "order\nservice": getAll(context, userId)
+"order\nservice" -> storage: getAll(context, userId)
+storage --> "order\nservice": []orders
+"order\nservice" --> "order\nhandler": []orders
+"order\nhandler" --> user: 200 OK: []orders
+
+== Получение списка загруженных номеров заказов: нет данных для ответа ==
+user -> middleware: GET /api/user/orders
+middleware -> "order\nhandler": context: userId
+"order\nhandler" -> "order\nservice": getAll(context, userId)
+"order\nservice" -> storage: getAll(context, userId)
+storage --> "order\nservice": пустой список
+"order\nservice" --> "order\nhandler": пустой список
+"order\nhandler" --> user: 204 no content
+... ...
+@enduml

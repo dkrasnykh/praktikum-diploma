@@ -12,14 +12,24 @@ import (
 
 type WithdrawService struct {
 	storage storage.Withdraw
+	tm      Transaction
 }
 
-func NewWithdrawService(s storage.Withdraw) *WithdrawService {
-	return &WithdrawService{storage: s}
+func NewWithdrawService(s storage.Withdraw, tm Transaction) *WithdrawService {
+	return &WithdrawService{
+		storage: s,
+		tm:      tm,
+	}
 }
 
 func (s *WithdrawService) GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error) {
-	current, withdrawn, err := s.storage.GetUserBalance(ctx, userID)
+	newCtx, err := s.tm.InitTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.tm.CompleteTx(newCtx)
+
+	current, withdrawn, err := s.storage.GetUserBalance(newCtx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +40,21 @@ func (s *WithdrawService) WithdrawReward(ctx context.Context, userID int, req mo
 	if err := goluhn.Validate(req.Order); err != nil {
 		return errs.ErrInvalidOrderNumber
 	}
-	balance, err := s.GetUserBalance(ctx, userID)
+
+	newCtx, err := s.tm.InitTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.tm.CompleteTx(newCtx)
+
+	balance, err := s.GetUserBalance(newCtx, userID)
 	if err != nil {
 		return err
 	}
 	if balance.Current < req.Sum {
 		return errs.ErrNoReward
 	}
-	return s.storage.WithdrawReward(ctx, userID, req)
+	return s.storage.WithdrawReward(newCtx, userID, req)
 }
 
 func (s *WithdrawService) GetAllWithdrawals(ctx context.Context, userID int) ([]models.Withdraw, error) {

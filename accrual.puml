@@ -1,0 +1,39 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+actor user
+box "Gophermart" #LightCyan
+participant Handler
+participant Accrual
+collections workers
+database Storage
+end box
+participant "External\nservice"
+
+autonumber 1.1
+
+user -> Handler: POST /api/user/orders
+Handler -> Storage: save order with status NEW
+Storage --> Handler: order info
+Handler --> user: 202 OK
+
+group Procces orders [started every two seconds]
+autonumber 2.1
+Accrual -> Storage: get processing orders
+Storage --> Accrual: list of numbers
+group loop [numbers]
+Accrual -> workers : order number
+workers -> "External\nservice": GET /api/orders/{number}
+
+alt successful case
+    "External\nservice" --> workers: 200 OK with order info
+	workers -> Storage: update order status
+else too many requests response
+	"External\nservice" --> workers: 429 Too many requests
+	workers -> workers: extract retry-after value\npause all workers
+else failure response
+    "External\nservice" --> workers: 204, 500 status code
+    workers -> workers: log error
+end
+end
+end
+@enduml

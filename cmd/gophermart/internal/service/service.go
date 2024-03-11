@@ -10,6 +10,11 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
+type Transaction interface {
+	InitTx(ctx context.Context) (context.Context, error)
+	CompleteTx(ctx context.Context)
+}
+
 type Authorization interface {
 	CreateUser(ctx context.Context, user models.User) (int, error)
 	GenerateToken(ctx context.Context, login, password string) (string, error)
@@ -33,10 +38,10 @@ type Service struct {
 	Withdraw
 }
 
-func New(storage *storage.Storage, cfg *config.Config) *Service {
+func New(storage *storage.Storage, tm Transaction, cfg *config.Config) *Service {
 	return &Service{
 		Authorization: NewAuthService(storage),
-		Order:         NewOrderService(storage, cfg),
-		Withdraw:      NewWithdrawService(storage),
+		Order:         NewOrderService(storage, tm, cfg),
+		Withdraw:      NewWithdrawService(storage, tm),
 	}
 }

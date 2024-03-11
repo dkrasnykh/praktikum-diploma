@@ -1,0 +1,55 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+actor user
+box "Gophermart" #LightCyan
+participant "auth\nhandler"
+participant "auth\nservice"
+database storage
+end box
+
+== Регистрация пользователя: неверный формат запроса ==
+autonumber 1.1
+user -> "auth\nhandler": POST /api/user/register
+"auth\nhandler" -> "auth\nhandler": parse request body
+"auth\nhandler" --> user: 400 status bad request
+== Регистрация пользователя: логин уже занят ==
+autonumber 2.1
+user -> "auth\nhandler": POST /api/user/register
+"auth\nhandler" -> "auth\nservice": generate hash password
+"auth\nservice" -> storage: save user into database
+storage --> "auth\nservice": error: login already exist
+"auth\nservice" --> "auth\nhandler": error: login already exist
+"auth\nhandler" --> user: 409 status conflict
+== Регистрация пользователя: пользователь успешно зарегистрирован и аутентифицирован ==
+autonumber 3.1
+user -> "auth\nhandler": POST /api/user/register
+"auth\nhandler" -> "auth\nservice": generate hash password
+"auth\nservice" -> storage: save user into database
+storage --> "auth\nservice": user id
+"auth\nservice" --> "auth\nhandler": generate token
+"auth\nhandler" --> user: 200 OK jwt token
+
+== Аутентификация пользователя: неверный формат запроса ==
+autonumber 4.1
+user -> "auth\nhandler": POST /api/user/login
+"auth\nhandler" -> "auth\nhandler": parse request body
+"auth\nhandler" --> user: 400 status bad request
+
+== Аутентификация пользователя: неверная пара логин/пароль ==
+autonumber 5.1
+user -> "auth\nhandler": POST /api/user/register
+"auth\nhandler" -> "auth\nservice": generate token
+"auth\nservice" -> storage: get user
+storage --> "auth\nservice": error: invalid login or password
+"auth\nservice" --> "auth\nhandler": error: invalid login or password
+"auth\nhandler" --> user: 401 status unauthorized
+
+== Аутентификация пользователя: пользователь успешно аутентифицирован ==
+autonumber 6.1
+user -> "auth\nhandler": POST /api/user/register
+"auth\nhandler" -> "auth\nservice": generate token
+"auth\nservice" -> storage: get user
+storage --> "auth\nservice": user id
+"auth\nservice" --> "auth\nhandler": jwt token
+"auth\nhandler" --> user: 200 OK jwt token
+@enduml
