@@ -10,7 +10,46 @@ import (
 
 	models "github.com/dkrasnykh/praktikum-diploma/cmd/gophermart/pkg/models"
 	gomock "github.com/golang/mock/gomock"
+	pgx "github.com/jackc/pgx/v5"
 )
+
+// MockTransaction is a mock of Transaction interface.
+type MockTransaction struct {
+	ctrl     *gomock.Controller
+	recorder *MockTransactionMockRecorder
+}
+
+// MockTransactionMockRecorder is the mock recorder for MockTransaction.
+type MockTransactionMockRecorder struct {
+	mock *MockTransaction
+}
+
+// NewMockTransaction creates a new mock instance.
+func NewMockTransaction(ctrl *gomock.Controller) *MockTransaction {
+	mock := &MockTransaction{ctrl: ctrl}
+	mock.recorder = &MockTransactionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTransaction) EXPECT() *MockTransactionMockRecorder {
+	return m.recorder
+}
+
+// GetCtxTxOrDefault mocks base method.
+func (m *MockTransaction) GetCtxTxOrDefault(ctx context.Context) (pgx.Tx, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCtxTxOrDefault", ctx)
+	ret0, _ := ret[0].(pgx.Tx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCtxTxOrDefault indicates an expected call of GetCtxTxOrDefault.
+func (mr *MockTransactionMockRecorder) GetCtxTxOrDefault(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCtxTxOrDefault", reflect.TypeOf((*MockTransaction)(nil).GetCtxTxOrDefault), ctx)
+}
 
 // MockAuthorization is a mock of Authorization interface.
 type MockAuthorization struct {
@@ -200,12 +239,13 @@ func (mr *MockWithdrawMockRecorder) GetAllWithdrawals(ctx, userID interface{}) *
 }
 
 // GetUserBalance mocks base method.
-func (m *MockWithdraw) GetUserBalance(ctx context.Context, userID int) (*models.UserBalance, error) {
+func (m *MockWithdraw) GetUserBalance(ctx context.Context, userID int) (int64, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserBalance", ctx, userID)
-	ret0, _ := ret[0].(*models.UserBalance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetUserBalance indicates an expected call of GetUserBalance.

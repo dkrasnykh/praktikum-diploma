@@ -13,7 +13,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.3
 	github.com/pressly/goose/v3 v3.18.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.28.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.28.0
 )
