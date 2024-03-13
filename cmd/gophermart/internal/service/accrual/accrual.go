@@ -2,7 +2,6 @@ package accrual
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -36,7 +35,7 @@ func (a *Accrual) Run(ctx context.Context) {
 	requestTicker := time.NewTicker(time.Duration(a.cfg.RequestInterval) * time.Second)
 	defer requestTicker.Stop()
 
-	tasks := make(chan string, 10)
+	tasks := make(chan string, a.cfg.RateLimit)
 
 	for i := 0; i < a.cfg.RateLimit; i++ {
 		a.ch.Insert(i, make(chan int))
@@ -65,7 +64,7 @@ func (a *Accrual) worker(ctx context.Context, tasks <-chan string, id int) {
 			}
 			a.processOrder(ctx, number)
 		case timeout := <-a.ch.Get(id):
-			time.Sleep(time.Duration(timeout) * time.Millisecond)
+			time.Sleep(time.Duration(timeout) * time.Second)
 		}
 	}
 }
@@ -82,31 +81,28 @@ func (a *Accrual) processOrder(ctx context.Context, number string) {
 
 func (a *Accrual) getOrderStatus(number string) (*models.AccrualResponse, error) {
 	url := fmt.Sprintf("%s/api/orders/%s", a.cfg.AccrualSystemAddress, number)
-	resp, err := a.client.R().Get(url)
+	var order models.AccrualResponse
+	resp, err := a.client.R().SetResult(&order).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("error accrual requesting order status : %w", err)
 	}
+
 	switch resp.StatusCode() {
 	case http.StatusOK:
-		var order models.AccrualResponse
-		err = json.Unmarshal(resp.Body(), &order)
-		if err != nil {
-			return nil, fmt.Errorf("invalid accrual response body : %w", err)
-		}
 		return &order, nil
 	case http.StatusTooManyRequests:
 		retryAfterHeader := resp.Header().Get("Retry-After")
 		if retryAfterHeader != "" {
 			timeout, err := strconv.Atoi(retryAfterHeader)
 			if err != nil {
-				a.ch.Broadcast(2000)
+				a.ch.Broadcast(a.cfg.DefaultTimeout)
 				logrus.Error(err)
 			}
 			a.ch.Broadcast(timeout)
 		}
 		fallthrough
 	default:
-		return nil, fmt.Errorf("received response from accrual with status code : %d", resp.StatusCode())
+		return nil, fmt.Errorf("received response from accrual with status code : %d; order number: %s", resp.StatusCode(), number)
 	}
 }
 

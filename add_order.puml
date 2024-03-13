@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+actor user
+box "Gophermart" #LightCyan
+participant middleware
+participant "order\nhandler"
+participant "order\nservice"
+database storage
+end box
+
+autonumber
+user -> middleware: POST /api/user/orders
+middleware -> "order\nhandler": context : userId
+"order\nhandler" -> "order\nservice": ctx, userId, number
+"order\nservice" -> "order\nservice": валидация номера заказа\n(алгоритм Луна)
+"order\nservice" -> storage: getUserIdByNumber(orderNumber)
+activate "order\nservice"
+storage --> "order\nservice": nil response
+"order\nservice" -> storage: новый заказ со статусом NEW
+storage --> "order\nservice": nil error
+deactivate "order\nservice"
+ "order\nservice" --> "order\nhandler":  nil error
+ "order\nhandler" --> user: 202 Accepted
+@enduml

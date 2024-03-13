@@ -14,6 +14,7 @@ type Config struct {
 	RateLimit            int    `env:"RATE_LIMIT"`
 	QueryTimeout         int    `env:"QUERY_TIMEOUT"`
 	ConnectTimeout       int    `env:"CONNECT_TIMEOUT"`
+	DefaultTimeout       int    `env:"DEFAULT_TIMEOUT"`
 }
 
 func New() (*Config, error) {
@@ -25,6 +26,7 @@ func New() (*Config, error) {
 	flag.IntVar(&c.RateLimit, "k", 15, "number of orders per request")
 	flag.IntVar(&c.QueryTimeout, "q", 5, "database query timeout")
 	flag.IntVar(&c.ConnectTimeout, "c", 10, "database connection timeout")
+	flag.IntVar(&c.DefaultTimeout, "t", 2, "worker default timeout after 429 response")
 	flag.Parse()
 
 	err := env.Parse(&c)
