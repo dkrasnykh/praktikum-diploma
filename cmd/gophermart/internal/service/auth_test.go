@@ -20,7 +20,7 @@ func TestCreateUser(t *testing.T) {
 		ctx           context.Context
 		inputUser     models.User
 		mockBehavior  mockBehavior
-		expectedId    int
+		expectedID    int
 		expectedError error
 	}{
 		{
@@ -34,7 +34,7 @@ func TestCreateUser(t *testing.T) {
 				user.Password = "63687364616a6376687364626a68636a6462685baa61e4c9b93f3f0682250b6cf8331b7ee68fd8"
 				r.EXPECT().CreateUser(context.Background(), user).Return(1, nil)
 			},
-			expectedId:    1,
+			expectedID:    1,
 			expectedError: nil,
 		},
 	}
@@ -50,7 +50,7 @@ func TestCreateUser(t *testing.T) {
 
 			id, err := services.CreateUser(test.ctx, test.inputUser)
 
-			assert.Equal(t, id, test.expectedId)
+			assert.Equal(t, id, test.expectedID)
 			assert.Equal(t, err, test.expectedError)
 		})
 	}
